@@ -6,11 +6,11 @@ let glb = {
     backgroundColor: 0xD4F1F4,
     physics: {
       default: 'arcade',
-      arcade: {
-        debug: true
-      }
+      // arcade: {
+      //   debug: true
+      // }
     },
-    scene: [Level1]
+    scene: [startScreen, Level1, endScreen]
   }
 }
 

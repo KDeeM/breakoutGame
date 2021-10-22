@@ -1,6 +1,7 @@
 class Level1 extends Phaser.Scene{
   constructor(){
     super("Level1");
+    this.__pregameTime = 3;
     this.__gameOver = false;
     this.__paddleSpeed = 200;
     this.__tile = {
@@ -13,14 +14,8 @@ class Level1 extends Phaser.Scene{
         x_step: 70,
         x_repeat: 4
       }
-    }
-  }
-
-  preload(){
-    this.load.image("ball", "../images/ball.png");
-    this.load.image("paddle", "../images/paddle.png");
-    this.load.image("tile", "../images/tile.png");
-    this.load.image("wall", "../images/wall.png");
+    };
+    this._vars_ = {};
   }
 
   create(){
@@ -30,10 +25,9 @@ class Level1 extends Phaser.Scene{
 
     // create ball
     this.ball = this.physics.add.image(glb.config.width/2, glb.config.height/2, "ball").setScale(0.2).setBounce(1).setCollideWorldBounds(true);
-    this.setBallInitialVelocity(this.ball);
 
     this.physics.add.collider(this.ball, this.upperWall);
-    this.physics.add.collider(this.ball, this.lowerWall, this.endGame, null, this);
+    this.physics.add.collider(this.ball, this.lowerWall, this.failedGame, null, this);
 
     // create paddle
     this.paddle = this.physics.add.image(160, 420, "paddle").setScale(0.2).refreshBody().setImmovable(true).setCollideWorldBounds(true);
@@ -43,9 +37,24 @@ class Level1 extends Phaser.Scene{
     this.cursors = this.input.keyboard.createCursorKeys();
 
     // create tiles
+    this._vars_.tileValue = 10;
     this.tiles = this.physics.add.staticGroup();
     this.createTiles();
     this.physics.add.collider(this.ball, this.tiles, this.tileDestroyed, null, this);
+
+    // score
+    this._vars_.score = 0
+    this.txt_score = this.add.text(10, 8, "Score: 0");
+
+    // countdown timer
+    this._vars_.countdownText = 3
+    this.txt_countdown = this.add.text(glb.config.width/2, glb.config.height/2, this._vars_.countdownText, {fontSize: "48px", fill: "#ff0000"}).setOrigin(0.5);
+    this.countdown(this._vars_.countdownText).then(
+      () => {
+        this.txt_countdown.setAlpha(0);
+        this.setBallInitialVelocity(this.ball);
+      }
+    );
   }
 
   update(){
@@ -57,9 +66,42 @@ class Level1 extends Phaser.Scene{
     ball.setVelocityX(Phaser.Math.Between(-200, 200));
   }
 
-  endGame(){
-    this.__gameOver = true;
-    console.log("GameOver");
+  countdown(time){
+    return new Promise(
+      (res, rej) => {
+        if(time <= 0){
+          res("done");
+        }else{
+          this.updatText(time, this.txt_countdown);
+          timer(1).then(
+            () => {
+              this.countdown(time - 1).then(
+                () => {
+                  res("done");
+                }
+              )
+            }
+          )
+        }
+      }
+    )
+  }
+
+  updatText(text, textObject){
+    textObject.setText(text);
+  }
+
+  failedGame(){
+    this.endGame();
+  }
+
+  endGame(win = false){
+    this.physics.pause();
+    let data = {
+      score: this._vars_.score,
+      success: win
+    };
+    this.scene.start('endScreen', data);
   }
 
   movePaddle(){
@@ -94,13 +136,15 @@ class Level1 extends Phaser.Scene{
   tileDestroyed(ball, tile){
     tile.disableBody(true, true);
     tile.setTint(0xff00ff);
+    this._vars_.score += this._vars_.tileValue;
+    this.updateScore();
     if(this.tiles.countActive(true) == 0){
-      this.gameWon();
+      this.endGame(true);
     }
   }
 
-  gameWon(){
-    console.log("game won");
+  updateScore(){
+    this.updatText("Score: " + this._vars_.score, this.txt_score);
+    return;
   }
-
 }
