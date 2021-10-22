@@ -7,10 +7,10 @@ class startScreen extends Phaser.Scene{
   }
 
   preload(){
-    this.load.image("ball", "../images/ball.png");
-    this.load.image("paddle", "../images/paddle.png");
-    this.load.image("tile", "../images/tile.png");
-    this.load.image("wall", "../images/wall.png");
+    this.load.image("ball", "/images/ball.png");
+    this.load.image("paddle", "/images/paddle.png");
+    this.load.image("tile", "/images/tile.png");
+    this.load.image("wall", "/images/wall.png");
   }
 
   create(){
